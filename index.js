@@ -36,6 +36,12 @@ const userCollection = database.db(mongodb_database).collection('users');
 
 app.use(express.urlencoded({extended: false}));
 
+var mongoStore = MongoStore.create({
+	mongoUrl: `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/sessions`,
+    crypto: {
+        secret: mongodb_session_secret
+    }
+});
 
 
 app.use(session({
@@ -45,12 +51,7 @@ app.use(session({
     resave: true
 
 }));    
-var mongoStore = MongoStore.create({
-	mongoUrl: `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/sessions`,
-    crypto: {
-        secret: mongodb_session_secret
-    }
-});
+
 app.get('/', (req,res) => {
     if (!req.session.authenticated) {
         var html = '<a href="/login"><button>LOGIN</button></a>'
