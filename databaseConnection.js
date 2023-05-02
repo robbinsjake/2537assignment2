@@ -7,4 +7,17 @@ const mongodb_password = process.env.MONGODB_PASSWORD;
 const MongoClient = require("mongodb").MongoClient;
 const atlasURI = `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/?retryWrites=true`;
 var database = new MongoClient(atlasURI, {useNewUrlParser: true, useUnifiedTopology: true});
+
+
+async function connectToDatabase() {
+    try {
+        await database.connect();
+        console.log("Connected to MongoDB");
+    } catch (error) {
+        console.error("Error connecting to MongoDB:", error);
+    }
+}
+
+
+
 module.exports = {database};
