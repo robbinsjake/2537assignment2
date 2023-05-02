@@ -10,6 +10,7 @@ const MongoStore = require('connect-mongo');
 const app = express();
 
 const port = process.env.PORT || 3000;
+
 const expireTime = 60 * 60 * 1000; // 1 hour
 
 //Users and Passwords (in memory 'database')
@@ -45,7 +46,7 @@ var mongoStore = MongoStore.create({
 
 app.use(session({
     secret: node_session_secret,   
-    // store: MongoStore, 
+    store: MongoStore, 
     saveUninitialized: false,
     resave: true
 
