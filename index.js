@@ -183,7 +183,7 @@ app.post('/loginSubmit', async (req,res) => {
         console.log(result);
 
         if (result.length != 1) {
-            res.render("invalidLogin");
+            res.render("invalidlogin");
             return;
         }
         if (await bcrypt.compare(password, result[0].password)) {
