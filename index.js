@@ -195,7 +195,7 @@ app.post('/loginSubmit', async (req,res) => {
             res.redirect('/members');
 
         } else {
-            res.render("invalidLogin");
+            res.render("invalidlogin");
         }
 
 
