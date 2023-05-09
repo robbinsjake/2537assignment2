@@ -1,8 +1,11 @@
 <%- include("templates/header") %>
-    <h1>Login Page</h1>
-    <form method="post" action="/loginSubmit">
+<div class="container text-center">
+    <h1>Login</h1>
+    <form method="post" action="/loginSubmit" class="form-signin text-center mb-4">
     <input type="email" name="email" placeholder="email" />
     <br/><input type="password" name="password" placeholder="password" />
-    <br/><input type="submit" value="Login" />
+    <br/><br/><input type="submit" value="Login" class="btn btn-primary" />
     </form>
+    </div>
 <%- include("templates/footer") %>
+

@@ -1,9 +1,23 @@
 <%- include("templates/header") %>
     <h1>Hello, <%=name%></h1>
-    <img src="/giphy1.gif" alt="a gif" style="width:300px">
-    <img src="/giphy2.gif" alt="a gif" style="width:300px">
-    <img src="/giphy3.gif" alt="a gif" style="width:300px">
+    
+    <div class="container">
+        <div class="row">
+          <div class="col-sm">
+            <img src="/giphy1.gif" alt="a gif" style="width:300px">
+          </div>
+          <div class="col-sm">
+            <img src="/giphy2.gif" alt="a gif" style="width:300px">
+          </div>
+          <div class="col-sm">
+            <img src="/giphy3.gif" alt="a gif" style="width:300px">
+          </div>
+        </div>
+      </div>
+    
+    
+    
     <br/>
-    <a href="/logout"><button>LOGOUT</button></a>`
+    <a href="/logout"><button class = "btn btn-warning">LOGOUT</button></a>`
     
 <%- include("templates/footer") %>
