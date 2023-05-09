@@ -1,0 +1,9 @@
+<li> <%= user.name %> ( <%= user.user_type %>)  
+    <form method="post" action="/promote">
+        <input type="hidden" name="email" value="<%= user.email %>">
+        <button type="submit">Promote to admin</button>
+    </form>
+
+    <form method="post" action="/demote"> <input type="hidden" name="email" value="<%= user.email %>">
+        <button type="submit">Demote to User</button>
+    </form>

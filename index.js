@@ -34,6 +34,9 @@ var {database} = include('databaseConnection');
 
 const userCollection = database.db(mongodb_database).collection('users');
 
+
+app.set('view engine', 'ejs');
+
 app.use(express.urlencoded({extended: false}));
 
 var mongoStore = MongoStore.create({
@@ -52,28 +55,58 @@ app.use(session({
 
 }));    
 
+function isValidSession(req) {
+    if (req.session.authenticated) {
+        return true;
+    }
+    return false;
+}
+
+function sessionValidation(req,res,next) {
+    if (isValidSession(req)) {
+        next();
+    }
+    else {
+        res.redirect('/login');
+    }
+}
+
+function isAdmin(req) {
+    if (req.session.user_type == "admin") {
+        
+        return true;
+    }
+    
+
+    return false;
+}
+
+function adminAuthorization(req, res, next) {
+    if (!isAdmin(req)) {
+        res.status(403);
+        res.render("errorMessage", {error: "Not Authorized"});
+        return;
+    }
+    else {
+        next();
+    }
+}
+
+
 app.get('/', (req,res) => {
     if (!req.session.authenticated) {
-        var html = '<a href="/login"><button>LOGIN</button></a>'
-        + '<br/><a href=\'/signup\'"><button>SIGNUP</button></a>';
-        
+        res.render("indexLoggedOut");        
     } else {    
-        var html = '<a href="/members"><button>MEMBERS AREA</button></a>'
-        +'</br><a href="/logout"><button>LOGOUT</button></a>';
+        res.render("indexLoggedIn");
     }
-    res.send(html);
+
 });
 
 app.get('/signup', (req,res) => {
 
-    var html = '<h1>Signup Page</h1>'
-    + '<form method="post" action="/signupSubmit">'
-    + '<input type="text" name="username" placeholder="username" >'
-    + '<br/><input name="email" type="email"  placeholder="email" >'
-    + '<br/><input type="password" name="password" placeholder="password" >'
-    + '<br/><input type="submit" value="Signup" />'
-    + '</form>';
-    res.send(html);
+
+    res.render("signup");
+
 });
 
 
@@ -83,11 +116,11 @@ app.post('/signupSubmit', async (req,res) => {
     var password = req.body.password;
 
     if (!name)  {
-        res.send('Username is required <br/><br/><a href = "/signup">Try again</a>');
+        res.render("invalidSignup", {error: "Name is required"});
     } else if (!email) {
-        res.send('Email is required <br/><br/><a href = "/signup">Try again</a>');
+        res.render("invalidSignup", {error: "Email is required"});
     } else if (!password) {
-        res.send('Password is required <br/><br/><a href = "/signup">Try again</a>');
+        res.render("invalidSignup", {error: "Password is required"});
     } else{
         //validate with joi
 
@@ -108,12 +141,13 @@ app.post('/signupSubmit', async (req,res) => {
     //hash password
         var hashedPassword = await bcrypt.hash(password, saltRounds);
     //save to db
-        await userCollection.insertOne({name: name, email: email, password: hashedPassword});
+        await userCollection.insertOne({name: name, email: email, password: hashedPassword, user_type: "user"});
         console.log("Inserted user");
 
         //redirect to members page
         req.session.authenticated = true;
         req.session.name = name;
+        req.session.user_type = "user";
         req.session.cookie.maxAge = expireTime;
         res.redirect('/members');
     }
@@ -121,13 +155,7 @@ app.post('/signupSubmit', async (req,res) => {
 
 
 app.get('/login', (req,res) => {
-    var html = '<h1>Login Page</h1>'
-    + '<form method="post" action="/loginSubmit">'
-    + '<input type="email" name="email" placeholder="email" />'
-    + '<br/><input type="password" name="password" placeholder="password" />'
-    + '<br/><input type="submit" value="Login" />'
-    + '</form>';
-    res.send(html);
+    res.render("login");
 });
 
 app.post('/loginSubmit', async (req,res) => {
@@ -150,44 +178,62 @@ app.post('/loginSubmit', async (req,res) => {
         }
 
         //check if user exists
-        const result = await userCollection.find({email: email}).project({name: 1, email: 1, password: 1, _id: 1}).toArray();
+        const result = await userCollection.find({email: email}).project({name: 1, email: 1, password: 1, _id: 1, user_type:1}).toArray();
 
         console.log(result);
 
         if (result.length != 1) {
-            res.send('Email is incorrect <br/><br/><a href = "/login">Try again</a>');
+            res.render("invalidLogin");
             return;
         }
         if (await bcrypt.compare(password, result[0].password)) {
             req.session.authenticated = true;
             req.session.name = result[0].name;
+            req.session.user_type = result[0].user_type;
             req.session.cookie.maxAge = expireTime;
 
             res.redirect('/members');
 
         } else {
-            res.send('Email/password is incorrect <br/><br/><a href = "/login">Try again</a>');
+            res.render("invalidLogin");
         }
 
 
 
     }
-});    
+}); 
+
+app.post('/promote', async (req,res) => {
+    var email = req.body.email;
+    console.log(email);
+    await userCollection.updateOne({email: email}, {$set: {user_type: "admin"}});
+    res.redirect('/admin');
 
 
-
-app.get("/members", (req,res) => {
-    if (!req.session.authenticated) {
-        res.redirect('/');
-    } else {    
-        var id = Math.floor(Math.random() * 3) + 1;
-        var html = `<h1>Hello, ${req.session.name}</h1>
-        <img src="/giphy${id}.gif" alt="a gif" style="width:300px"><br/>
-        <a href="/logout"><button>LOGOUT</button></a>`;
-        res.send(html);
-
-    }
 });
+
+app.post('/demote',  async (req,res) => {
+    var email = req.body.email;
+    console.log(email);
+    await userCollection.updateOne({email:email}, {$set: {user_type: "user"}});
+    res.redirect('/admin');
+
+});
+
+
+app.get("/admin", sessionValidation, adminAuthorization, async (req,res) => {
+
+        var users = await userCollection.find({}).project({name: 1, user_type: 1, _id: 1, email: 1}).toArray();
+        res.render("admin", {users} );
+    
+});
+
+
+
+app.get("/members", sessionValidation, (req,res) => {
+    res.render("members", {name: req.session.name});
+});
+
 app.use(express.static(__dirname + "/public"));
 
 app.get("/logout", (req,res) => {

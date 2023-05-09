@@ -1,0 +1,9 @@
+<%- include("templates/header") %>
+    <h1>Signup Page</h1>
+    <form method="post" action="/signupSubmit">
+    <input type="text" name="username" placeholder="username" >
+    <br/><input name="email" type="email"  placeholder="email" >
+    <br/><input type="password" name="password" placeholder="password" >
+    <br/><input type="submit" value="Signup" />
+    </form>
+<%- include("templates/footer") %>
